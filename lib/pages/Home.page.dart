@@ -11,7 +11,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List products = [];
-  final String apiUrl = 'http://192.168.1.64:5000/api/productos'; // Reemplaza con la IP si es necesario
+  final String apiUrl = 'http://192.168.56.1:5000/api/productos'; // Reemplaza con la IP si es necesario
+  bool _isLoading = false; // Controla si se muestra el spinner
 
   @override
   void initState() {
@@ -40,6 +41,10 @@ class _HomePageState extends State<HomePage> {
     required bool enStock,
     required String descripcion,
   }) async {
+    setState(() {
+      _isLoading = true; // Muestra el spinner cuando empieza a agregar
+    });
+
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -61,6 +66,10 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       print('Error: $e');
+    } finally {
+      setState(() {
+        _isLoading = false; // Oculta el spinner cuando termina la operación
+      });
     }
   }
 
@@ -127,7 +136,6 @@ class _HomePageState extends State<HomePage> {
                     Navigator.of(context).pop();
                   });
                 } else {
-                  // Aquí puedes manejar el caso en que algún campo esté vacío.
                   print('Por favor complete todos los campos');
                 }
               },
@@ -155,14 +163,18 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
+            // Botón para agregar producto y spinner
             ElevatedButton(
               onPressed: _showAddProductDialog,
               child: const Text('Agregar Producto'),
             ),
             const SizedBox(height: 20),
-            Expanded(
+            // Muestra el spinner si está cargando, o la lista de productos si no lo está
+            _isLoading
+                ? const Center(child: CircularProgressIndicator()) // Spinner mientras se agrega un producto
+                : Expanded(
               child: products.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(child: CircularProgressIndicator()) // Spinner al cargar productos
                   : ListView.builder(
                 itemCount: products.length,
                 itemBuilder: (context, index) {
